@@ -14,12 +14,17 @@
 const Factory = use('Factory')
 
 const User = use('App/Models/User')
+const Role = use('Role')
 
 class ClientSeeder {
   async run () {
-  	if(User.getCount() === 0){
-  		return await Factory.model('App/Models/User').createMany(10)
-  	}
+	const role = await Role.findBy('slug', 'client')
+	const clients = await Factory.model('App/Models/User').createMany(10)
+	await Promise.all(
+		clients.map(async client => {
+			client.roles().attach([role.id])
+		})
+	)
   }
 }
 

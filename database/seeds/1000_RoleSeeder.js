@@ -16,7 +16,6 @@ const Role = use('Role')
 
 class RoleSeeder {
   async run () {
-    if(Role.getCount() === 0){
       const admin = new Role()
       admin.name = 'Admin'
       admin.slug = 'admin'
@@ -34,7 +33,7 @@ class RoleSeeder {
       client.slug = 'client'
       client.description = 'Client of system'
       await client.save()
-    }
+
   }
 }
 
