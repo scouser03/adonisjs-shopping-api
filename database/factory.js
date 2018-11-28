@@ -50,7 +50,7 @@ Factory.blueprint('App/Models/Product', faker => {
 
 Factory.blueprint('App/Models/Coupon', faker => {
     return {
-        code: faker.country({ full: true }).toUpperCase(),
+        name: faker.country({ full: true }).toUpperCase(),
         discount: faker.integer({ min: 5, max: 30 }),
         quantity: 1,
         type: 'percent'

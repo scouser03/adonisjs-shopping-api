@@ -20,6 +20,7 @@ Route.get('/', () => {
   return { greeting: 'Hello world in JSON' }
 })
 
+//authenticated routes
 Route.group(() => {
 	Route.post('/register', 'AuthController.register').as('auth.register')
 	Route.post('/login', 'AuthController.login').as('auth.login')
@@ -28,4 +29,15 @@ Route.group(() => {
 })
 	.prefix('v1/auth')
 	.namespace('Auth')
+
+//Admin routes
+
+Route.group(() => {
+	Route.resource('category', 'CategoryController').apiOnly()
+	Route.resource('product', 'ProductController').apiOnly()
+	Route.resource('coupon', 'CouponController').apiOnly()
+	Route.resource('order', 'OrderController').apiOnly()
+})
+	.prefix('/v1/admin')
+	.namespace('Admin')
 
