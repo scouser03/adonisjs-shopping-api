@@ -1,9 +1,6 @@
 'use strict'
 
-/** @typedef {import('@adonisjs/framework/src/Request')} Request */
-/** @typedef {import('@adonisjs/framework/src/Response')} Response */
-/** @typedef {import('@adonisjs/framework/src/View')} View */
-
+const Category = use('App/Models/Category')
 /**
  * Resourceful controller for interacting with categories
  */
@@ -18,18 +15,8 @@ class CategoryController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
-  }
-
-  /**
-   * Render a form to be used for creating a new category.
-   * GET categories/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
+    const categories = await Category.query().paginate()
+    return response.send({categories})
   }
 
   /**
@@ -41,6 +28,9 @@ class CategoryController {
    * @param {Response} ctx.response
    */
   async store ({ request, response }) {
+    const { name, description } = request.all()
+    const category = await Category.create({ name, description })
+    return response.status(201).send({category})
   }
 
   /**
@@ -53,6 +43,8 @@ class CategoryController {
    * @param {View} ctx.view
    */
   async show ({ params, request, response, view }) {
+    const category = await Category.findOrFail(params.id)
+    return response.send({category})
   }
 
   /**
