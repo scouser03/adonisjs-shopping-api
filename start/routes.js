@@ -27,7 +27,7 @@ Route.group(() => {
 	Route.post('/refresh', 'AuthController.refresh').as('auth.refresh')
 	Route.post('/logout', 'AuthController.logout').as('auth.logout').middleware(['auth'])
 })
-	.prefix('v1/auth')
+	.prefix('api/v1/auth')
 	.namespace('Auth')
 
 //Admin routes
@@ -38,7 +38,7 @@ Route.group(() => {
 	Route.resource('coupon', 'CouponController').apiOnly()
 	Route.resource('order', 'OrderController').apiOnly()
 })
-	.prefix('/v1/admin')
+	.prefix('/api/v1/admin')
 	.namespace('Admin')
 	.middleware(['auth', 'is:(admin || manager) && !client'])
 

@@ -1,6 +1,8 @@
 'use strict'
 
 const Category = use('App/Models/Category')
+const { str_random } = use('App/Helpers')
+const Helpers = use('Helpers')
 /**
  * Resourceful controller for interacting with categories
  */
@@ -29,8 +31,26 @@ class CategoryController {
    */
   async store ({ request, response }) {
     const { name, description } = request.all()
-    const category = await Category.create({ name, description })
-    return response.status(201).send({category})
+
+    const image = request.file('image', {
+      types:['image'],
+      size: '2mb'
+    })
+
+    const filename = await str_random(30)
+
+    await image.move(Helpers.publicPath('uploads'), {
+      name: `${new Date().getTime()}-${filename}.${image.subtype}`
+    })
+
+    if(! image.moved()){
+      return response.status(400).send({message: "image dont't moved", error:image.error()})
+    }
+    return response.send({message: "image moved"})
+
+    // const category = await Category.create({ name, description })
+
+    // return response.status(201).send({category})
   }
 
   /**
