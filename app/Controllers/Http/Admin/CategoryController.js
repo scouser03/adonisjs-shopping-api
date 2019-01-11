@@ -1,8 +1,10 @@
 'use strict'
 
 const Category = use('App/Models/Category')
+const Image = use('App/Models/Image')
 const { str_random } = use('App/Helpers')
 const Helpers = use('Helpers')
+const Database = use('Database')
 /**
  * Resourceful controller for interacting with categories
  */
@@ -30,27 +32,49 @@ class CategoryController {
    * @param {Response} ctx.response
    */
   async store ({ request, response }) {
-    const { name, description } = request.all()
+    try{
+      const trx = await Database.beginTransaction()
+      const { name, description } = request.all()
 
-    const image = request.file('image', {
-      types:['image'],
-      size: '2mb'
-    })
+      const image = request.file('image', {
+        types:['image'],
+        size: '2mb'
+      })
 
-    const filename = await str_random(30)
+      const random_name = await str_random(30)
+      let filename = `${new Date().getTime()}-${random_name}.${image.subtype}`;
 
-    await image.move(Helpers.publicPath('uploads'), {
-      name: `${new Date().getTime()}-${filename}.${image.subtype}`
-    })
+      await image.move(Helpers.publicPath('uploads'), {
+        name: filename
+      })
 
-    if(! image.moved()){
-      return response.status(400).send({message: "image dont't moved", error:image.error()})
+      if(! image.moved()){
+        throw image.error()
+      }
+
+      const categoryImage = await Image.create({
+        path: filename,
+        size: image.size,
+        original_name: image.clientName,
+        extension: image.subtype
+      }, trx)
+      const category = await Category.create({
+        name,
+        description,
+        image_id: categoryImage.id
+      },trx)
+
+      await trx.commit()
+      return response.status(201).send({category})
+    }catch(e){
+      await trx.rollback()
+      return response.status(400)
+        .send({
+          message: "incorrect data", 
+          error: e.message
+        })
     }
-    return response.send({message: "image moved"})
-
-    // const category = await Category.create({ name, description })
-
-    // return response.status(201).send({category})
+    
   }
 
   /**
@@ -67,18 +91,7 @@ class CategoryController {
     return response.send({category})
   }
 
-  /**
-   * Render a form to update an existing category.
-   * GET categories/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
-  }
-
+  
   /**
    * Update category details.
    * PUT or PATCH categories/:id
@@ -88,6 +101,51 @@ class CategoryController {
    * @param {Response} ctx.response
    */
   async update ({ params, request, response }) {
+     const trx = await Database.beginTransaction()
+     try{
+      const category = await Category.findOrFail(params.id)
+      category.merge(request.all())
+
+      const image = request.file('image', {
+        types:['image'],
+        size: '2mb'
+      })
+
+      if(image){
+        const random_name = await str_random(30)
+        let filename = `${new Date().getTime()}-${random_name}.${image.subtype}`;
+
+        await image.move(Helpers.publicPath('uploads'), {
+          name: filename
+        })
+
+        if(! image.moved()){
+          throw image.error()
+        }
+
+        const categoryImage = await Image.create({
+          path: filename,
+          size: image.size,
+          original_name: image.clientName,
+          extension: image.subtype
+        }, trx)
+
+        category.image_id = categoryImage.id
+      }
+
+      
+      await category.save(trx)
+      await trx.commit()
+      return response.send(category)
+     }catch(e){
+        await trx.rollback()
+        return response.status(400)
+        .send({
+          message: "incorrect data", 
+          error: e.message
+        })
+
+     }
   }
 
   /**
@@ -99,6 +157,9 @@ class CategoryController {
    * @param {Response} ctx.response
    */
   async destroy ({ params, request, response }) {
+    const category = await Category.find(params.id)
+    category.delete()
+    return response.send({message: "success"})
   }
 }
 

@@ -8,6 +8,9 @@ class ImageSchema extends Schema {
     this.create('images', (table) => {
       table.increments()
       table.string('path')
+      table.integer('size')
+      table.string('original_name')
+      table.string('extension')
       table.timestamps()
     })
   }

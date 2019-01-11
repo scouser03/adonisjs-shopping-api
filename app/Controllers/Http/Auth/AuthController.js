@@ -1,17 +1,29 @@
 'use strict'
 const User = use('App/Models/User')
 const Role = use('Role')
+const Database = use('Database')
 class AuthController {
 	async register({request, response}){
-		const {name, surname, email, password } = request.all()
+		try{
+			const trx = await Database.beginTransaction()
+			const {name, surname, email, password } = request.all()
 
-		const user = await User.create({name, surname, email, password})
+			const user = await User.create({name, surname, email, password}, trx)
 
-		const UserRole = await Role.findBy('slug','client')
+			const UserRole = await Role.findBy('slug','client')
 
-		await user.roles().attach([UserRole.id]);
+			await user.roles().attach([UserRole.id], null, trx);
+			await trx.commit()
+			return response.status(201).send({data:user.toJSON() })
+		}catch(e){
+			await trx.rollback()
+			return response.status(400).send({
+				message:'incorrect data',
+				error: e.message 
+			})
 
-		return response.status(201).send({data:user.toJSON() })
+		}
+		
 	}
 
 	async login ({request, response, auth}){

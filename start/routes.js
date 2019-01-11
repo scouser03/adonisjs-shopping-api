@@ -15,6 +15,7 @@
 
 /** @type {typeof import('@adonisjs/framework/src/Route/Manager')} */
 const Route = use('Route')
+// const Validator = use('Validator')
 
 Route.get('/', () => {
   return { greeting: 'Hello world in JSON' }
@@ -22,23 +23,29 @@ Route.get('/', () => {
 
 //authenticated routes
 Route.group(() => {
-	Route.post('/register', 'AuthController.register').as('auth.register')
+	Route.post('/register', 'AuthController.register').as('auth.register').validator('ClientRegister')
 	Route.post('/login', 'AuthController.login').as('auth.login')
 	Route.post('/refresh', 'AuthController.refresh').as('auth.refresh')
 	Route.post('/logout', 'AuthController.logout').as('auth.logout').middleware(['auth'])
 })
-	.prefix('api/v1/auth')
+	.prefix('v1/auth')
 	.namespace('Auth')
 
 //Admin routes
 
 Route.group(() => {
-	Route.resource('category', 'CategoryController').apiOnly()
+	Route.resource('category', 'CategoryController')
+		.apiOnly()
+		.validator(new Map([
+			[['category.store'], ['Category/Store']],
+			[['category.update'], ['Category/Update']]
+		]))
 	Route.resource('product', 'ProductController').apiOnly()
 	Route.resource('coupon', 'CouponController').apiOnly()
 	Route.resource('order', 'OrderController').apiOnly()
+	Route.post('images/uploads', 'ImageController.uploads')
 })
-	.prefix('/api/v1/admin')
+	.prefix('v1/admin')
 	.namespace('Admin')
 	.middleware(['auth', 'is:(admin || manager) && !client'])
 
